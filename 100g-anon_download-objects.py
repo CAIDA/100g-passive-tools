@@ -4,12 +4,12 @@
 # PURPOSE:
 #   Downloads anonymized pcap files for a given timestamp 
 # INPUTS:
-#   {timestamp} - yyyymmdd-hhmmss 
+#   [Required] {timestamp} - yyyymmdd-hhmmss
 #     e.g. 20240418-181500
 # OUTPUTS:
 #   ./downloads/monitor=100g-01/year={YYYY}/mon={MM}/date={timestamp}.UTC/{file}
 # EXAMPLES:
-#   python3 100g-anon_download-objects.py {timestamp}
+#   python3 100g-anon_download-objects.py -ts {timestamp}
 # ASSUMPTIONS:
 #   1) [IMPORTANT] Assumes that one has at least 3TB of disk space to store
 #      the two pcap files (one for each direction).
@@ -36,7 +36,7 @@ config = configparser.ConfigParser()
 config.read(SWIFT_CONFIG)
 access_config = config["100g_s3_access"]
 
-parser = argparse.ArgumentParser(description='Generate anchor file templates')
+parser = argparse.ArgumentParser(description='Download files for a given capture')
 parser.add_argument('-ts', '--timestamp', dest='timestamp', help='Specifiy which capture to download')
 args = parser.parse_args()
 
@@ -85,7 +85,7 @@ def download_files() -> None:
     Path(file_path).mkdir(parents=True, exist_ok=True)
 
     for direction in ["a", "b"]:
-        for file_suffix in ["stats"]: # , "anon.pcap.gz"
+        for file_suffix in ["stats", "anon.pcap.gz"]:
             key = f"{file_prefix}/{args.timestamp}.dir{direction}.{file_suffix}"
             filename = f'{HOME}/downloads/{key}'
             download(s3_client, key, filename)
