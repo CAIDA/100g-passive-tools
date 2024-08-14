@@ -11,16 +11,18 @@ In order to access CAIDA's swift server, a `swift_config.ini` file will have to 
 ### Considerations
 
 ---
-Each one-directional anonymized pcap file, captured monthly, can reach up to approximately **1TB in size**, so users will need more than 2TB of space to download the entire one-hour capture.
+Each one-directional anonymized pcap file, captured monthly, can reach up to approximately **1TB in size**, so users will need more than **2TB of space** to download the entire one-hour capture.
 
 ### Troubleshooting
 
 ---
 Refer to the following [Wiki Page](https://github.com/CAIDA/100g-passive-tools/wiki/Troubleshooting) to troubleshoot commonly found errors.
 
+<br/>
+
 # Access Methods
 
-### AWS SDK's (boto3)
+### AWS SDK (boto3)
 
 ---
 **Note:** This method requires a `swift_config.ini` file to be configured.
@@ -44,5 +46,5 @@ aws s3api list-objects --bucket 100g-anon-pcap --endpoint-url https://hermes.cai
 
 **Download a file in the 100g-anon-pcap bucket/container**<br/>
 ```
-aws s3api get-object --bucket 100g-anon-pcap --key monitor=100g-01/year=2024/mon=05/date=20240523-210000.UTC/20240523-210000.dira.stats --endpoint-url https://hermes.caida.org --output text monitor=100g-01/year=2024/mon=05/date=20240523-210000.UTC/20240523-210000.dira.stats
+aws s3api get-object --bucket 100g-anon-pcap --key monitor=100g-01/year=2024/mon=05/date=20240523-210000.UTC/20240523-210000.dira.stats --endpoint-url https://hermes.caida.org --output text 20240523-210000.dira.stats
 ```
