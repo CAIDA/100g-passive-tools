@@ -25,18 +25,23 @@ Refer to the following [Wiki Page](https://github.com/CAIDA/100g-passive-tools/w
 <br/>
 
 # Access Methods
+**Note:** Refer to the [requirements.txt](https://github.com/CAIDA/100g-passive-tools/blob/main/requirements.txt) file to install the dependencies needed for the recipes.
+<br/><br/>
 
 ### AWS SDK (boto3)
 
 ---
-**Note:** This method requires a `swift_config.ini` file to be configured.
+**Note:** This method requires a `swift_config.ini` file to be configured, and assumes you've installed [boto3](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html) locally.
 
 Refer to the following recipes to download or list out files for a given capture, [100g-anon_download-objects.py](https://github.com/CAIDA/100g-passive-tools/blob/main/100g-anon_download-objects.py) and [100g-anon_list-objects.py](https://github.com/CAIDA/100g-passive-tools/blob/main/100g-anon_list-objects.py)
+
+<br/>
 
 ### AWS CLI
 
 ---
-**Note:** This method requires your `~/.aws/credentials` file to be configured.
+**Note:** This method requires your `~/.aws/credentials` file to be configured, and assumes you've set up [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html) locally.<br/>
+For installing instructions, reference [AWS Documentation](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html).
 ```
 [default]
 aws_access_key_id = 
