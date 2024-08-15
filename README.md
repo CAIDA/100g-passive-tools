@@ -1,8 +1,9 @@
 # 100g-passive-tools
 This repository contains code recipes to demonstrate how to access CAIDA's 100G passive pcap data using various methods.
 
+---
+Clone the repository into an environment that has a minimum of **2TB of disk space**
 ```
-# Clone the repository into an environment that has a minimum of 2TB of disk space
 git clone https://github.com/CAIDA/100g-passive-tools.git
 ```
 
