@@ -50,8 +50,9 @@ aws_secret_access_key =
 
 **List out files in the 100g-anon-pcap bucket/container**<br/>
 ```
-aws s3api list-objects --bucket 100g-anon-pcap --endpoint-url https://hermes.caida.org
+aws s3api list-objects --bucket 100g-anon-pcap --endpoint-url https://hermes.caida.org --output text
 ```
+**Note:** `--output {text|json|table}`
 
 **Download a file in the 100g-anon-pcap bucket/container**<br/>
 ```
