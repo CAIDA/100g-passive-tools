@@ -1,11 +1,14 @@
 # 100g-passive-tools
 This repository contains code recipes to demonstrate how to access CAIDA's 100G passive pcap data using various methods.
 
+```
+# Clone the repository into an environment that has a minimum of 2TB of disk space
+git clone https://github.com/CAIDA/100g-passive-tools.git
+```
+
 ### Configuration
 ---
-After sending a request using this [form](https://www.caida.org/catalog/datasets/request_user_info_forms/passive_100g_dataset_request/), once approved, you will receiving a confirmation email containing AWS S3 credentials (`aws_access_key_id` and `aws_secret_access_key`).
-
-In order to access CAIDA's swift server, a `swift_config.ini` file will have to be configured using the credentials provided.<br/>
+In order to access CAIDA's swift server, a `swift_config.ini` file will have to be configured in the repository directory, using the AWS S3 credentials provided in the confirmation email (`aws_access_key_id` and `aws_secret_access_key`).<br/><br/>
 **Note:** One can use the following config file template to get started: [swift_config-example.ini](https://github.com/CAIDA/100g-passive-tools/blob/main/swift_config-example.ini)
 
 ### Considerations
