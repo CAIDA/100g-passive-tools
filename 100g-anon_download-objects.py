@@ -6,10 +6,14 @@
 # INPUTS:
 #   [Required] {timestamp} - yyyymmdd-hhmmss
 #     e.g. 20240418-181500
+#
+#   [Required] {bucket} - 100g-anon-pcap-{year}
+#     e.g. 100g-anon-pcap-2024
 # OUTPUTS:
-#   ./downloads/monitor=100g-01/year={YYYY}/mon={MM}/date={timestamp}.UTC/{file}
+#   ./downloads/monitor=100g-01/mon={MM}/date={timestamp}.UTC/{file}
 # EXAMPLES:
-#   python3 100g-anon_download-objects.py -ts {timestamp}
+#   python3 100g-anon_download-objects.py -ts {timestamp} -b {bucket}
+#   python3 100g-anon_download-objects.py -ts 20240418-181500 -b 100g-anon-pcap-2024
 # ASSUMPTIONS:
 #   1) [IMPORTANT] Assumes that one has at least 3TB of disk space to store
 #      the two pcap files (one for each direction).
@@ -37,7 +41,8 @@ config.read(SWIFT_CONFIG)
 access_config = config["100g_s3_access"]
 
 parser = argparse.ArgumentParser(description='Download files for a given capture')
-parser.add_argument('-ts', '--timestamp', dest='timestamp', help='Specifiy which capture to download')
+parser.add_argument('-ts', '--timestamp', dest='timestamp', help='Specify which capture to download')
+parser.add_argument('-b', '--bucket', dest='bucket', help='Specify which bucket to download from')
 args = parser.parse_args()
 
 def config_client() -> object:
@@ -55,12 +60,12 @@ def config_client() -> object:
     )
     return s3_client
 
-def download(s3_client:object, key:str, filename:str) -> None:
+def download(bucket:str, s3_client:object, key:str, filename:str) -> None:
     """
     Retrieves files from swift bucket/container
     """
     try:
-        s3_client.download_file(Bucket=access_config["bucket"], Key=key, Filename=filename)
+        s3_client.download_file(Bucket=bucket, Key=key, Filename=filename)
         print(f"Downloaded {os.path.basename(key)} into {filename}")
     except Exception as error:
         print("-"*50)
@@ -77,7 +82,7 @@ def download_files() -> None:
     year = (args.timestamp).split("-")[0][:4]
     month = (args.timestamp).split("-")[0][4:6]
 
-    file_prefix = f"monitor=100g-01/year={year}/mon={month}/date={args.timestamp}.UTC"
+    file_prefix = f"monitor=100g-01/mon={month}/date={args.timestamp}.UTC"
 
     # Have to create directories in order to download files
     file_path = f"downloads/{file_prefix}"
@@ -85,16 +90,33 @@ def download_files() -> None:
     Path(file_path).mkdir(parents=True, exist_ok=True)
 
     for direction in ["a", "b"]:
-        for file_suffix in ["stats", "anon.pcap.gz"]:
+        for file_suffix in ["stats"]: # ["stats", "anon.pcap.gz"]:
             key = f"{file_prefix}/{args.timestamp}.dir{direction}.{file_suffix}"
             filename = f'{HOME}/downloads/{key}'
-            download(s3_client, key, filename)
+            download(args.bucket, s3_client, key, filename)
+
+    # For downloading from multiple buckets
+    #for bucket in (access_config["buckets"]).split():
+    #    for direction in ["a", "b"]:
+    #        for file_suffix in ["stats"]: # ["stats", "anon.pcap.gz"]:
+    #            key = f"{file_prefix}/{args.timestamp}.dir{direction}.{file_suffix}"
+    #            filename = f'{HOME}/downloads/{key}'
+    #            download(access_config["bucket"], s3_client, key, filename)
 
 def main():
     # Validates Input
     ts_pattern = re.compile('\d{8}-\d{6}') # e.g. 20240418-181500
+
+    if not (args.timestamp):
+        print("Timestamp is required --> -ts YYYYMMDD-HHMMSS")
+        sys.exit()
+
     if not (ts_pattern.match(str(args.timestamp))):
         print(f"Incorrect timestamp format: {args.timestamp} --> YYYYMMDD-HHMMSS")
+        sys.exit()
+
+    if not (args.bucket):
+        print("Bucket is required --> -b 100g-anon-pcap-{year}")
         sys.exit()
 
     download_files()
