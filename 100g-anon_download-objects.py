@@ -108,7 +108,7 @@ def main():
     ts_pattern = re.compile('\d{8}-\d{6}') # e.g. 20240418-181500
 
     if not (args.timestamp):
-        print("Bucket is required --> -b 100g-anon-pcap-{year}")
+        print("Timestamp is required --> -ts YYYYMMDD-HHMMSS")
         sys.exit()
 
     if not (ts_pattern.match(str(args.timestamp))):
