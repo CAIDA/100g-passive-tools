@@ -1,8 +1,8 @@
-#+
+# +
 # NAME:
 #   100g-anon_list-objects.py
 # PURPOSE:
-#   List the files in the 100g-anon-pcap bucket/container 
+#   List the files in the 100g-anon-pcap bucket/container
 # INPUTS:
 #   [Optional] {timestamp flag}: -ts
 #   [Optional] {bucket flag}: -b
@@ -29,7 +29,7 @@
 #        buckets
 #        aws_access_key_id
 #        aws_secret_access_key
-#-
+# -
 
 import os
 import json
@@ -47,19 +47,23 @@ config = configparser.ConfigParser()
 config.read(SWIFT_CONFIG)
 access_config = config["100g_s3_access"]
 
-parser = argparse.ArgumentParser(description='List files in 100g-anon-pcap Container')
-parser.add_argument('-ts', '--timestamps', dest='timestamps', action='store_true', default=False, help='List unique timestamps of objects')
-parser.add_argument('-ab', '--allbuckets', dest='buckets', action='store_true', default=True, help='List objects from all buckets (Default)')
-parser.add_argument('-b', '--bucket', dest='bucket', help='List objects from one bucket')
+parser = argparse.ArgumentParser(
+    description='List files in 100g-anon-pcap Container')
+parser.add_argument('-ts', '--timestamps', dest='timestamps', action='store_true',
+                    default=False, help='List unique timestamps of objects')
+parser.add_argument('-ab', '--allbuckets', dest='buckets', action='store_true',
+                    default=True, help='List objects from all buckets (Default)')
+parser.add_argument('-b', '--bucket', dest='bucket',
+                    help='List objects from one bucket')
 args = parser.parse_args()
 
-#boto3.set_stream_logger(name='botocore')  # this enables debug tracing
+# boto3.set_stream_logger(name='botocore')  # this enables debug tracing
 session = boto3.Session()
 s3_client = session.client(
-    service_name = 's3',
-    endpoint_url = access_config["endpoint_url"],
-    aws_access_key_id = access_config["aws_access_key_id"],
-    aws_secret_access_key = access_config["aws_secret_access_key"],
+    service_name='s3',
+    endpoint_url=access_config["endpoint_url"],
+    aws_access_key_id=access_config["aws_access_key_id"],
+    aws_secret_access_key=access_config["aws_secret_access_key"],
     config=botocore.client.Config(signature_version='s3')
 )
 

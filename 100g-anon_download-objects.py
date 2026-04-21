@@ -1,8 +1,8 @@
-#+
+# +
 # NAME:
 #   100g-anon_download-objects.py
 # PURPOSE:
-#   Downloads anonymized pcap files for a given timestamp 
+#   Downloads anonymized pcap files for a given timestamp
 # INPUTS:
 #   [Required] {timestamp} - yyyymmdd-hhmmss
 #     e.g. 20240418-181500
@@ -21,7 +21,7 @@
 #   2) [IMPORTANT] `swift_config.ini` is configured with the following credentials
 #        aws_access_key_id
 #        aws_secret_access_key
-#-
+# -
 
 import re
 import os
@@ -40,27 +40,32 @@ config = configparser.ConfigParser()
 config.read(SWIFT_CONFIG)
 access_config = config["100g_s3_access"]
 
-parser = argparse.ArgumentParser(description='Download files for a given capture')
-parser.add_argument('-ts', '--timestamp', dest='timestamp', help='Specify which capture to download')
-parser.add_argument('-b', '--bucket', dest='bucket', help='Specify which bucket to download from')
+parser = argparse.ArgumentParser(
+    description='Download files for a given capture')
+parser.add_argument('-ts', '--timestamp', dest='timestamp',
+                    help='Specify which capture to download')
+parser.add_argument('-b', '--bucket', dest='bucket',
+                    help='Specify which bucket to download from')
 args = parser.parse_args()
+
 
 def config_client() -> object:
     """
     Configures the s3 client
     """
-    #boto3.set_stream_logger(name='botocore')  # this enables debug tracing
+    # boto3.set_stream_logger(name='botocore')  # this enables debug tracing
     session = boto3.Session()
     s3_client = session.client(
         service_name='s3',
-        endpoint_url = access_config["endpoint_url"],
-        aws_access_key_id = access_config["aws_access_key_id"],
-        aws_secret_access_key = access_config["aws_secret_access_key"],
+        endpoint_url=access_config["endpoint_url"],
+        aws_access_key_id=access_config["aws_access_key_id"],
+        aws_secret_access_key=access_config["aws_secret_access_key"],
         config=botocore.client.Config(signature_version='s3v4'),
     )
     return s3_client
 
-def download(bucket:str, s3_client:object, key:str, filename:str) -> None:
+
+def download(bucket: str, s3_client: object, key: str, filename: str) -> None:
     """
     Retrieves files from swift bucket/container
     """
@@ -73,6 +78,7 @@ def download(bucket:str, s3_client:object, key:str, filename:str) -> None:
         print(f"{error}")
         print("-"*50)
 
+
 def download_files() -> None:
     """
     Downloads the files associated with the specified timestamp
@@ -82,7 +88,7 @@ def download_files() -> None:
     year = (args.timestamp).split("-")[0][:4]
     month = (args.timestamp).split("-")[0][4:6]
 
-    file_prefix = f"monitor=100g-01/mon={month}/date={args.timestamp}.UTC"
+    file_prefix = f"monitor=100g-01/year={year}/mon={month}/date={args.timestamp}.UTC"
 
     # Have to create directories in order to download files
     file_path = f"downloads/{file_prefix}"
@@ -90,29 +96,31 @@ def download_files() -> None:
     Path(file_path).mkdir(parents=True, exist_ok=True)
 
     for direction in ["a", "b"]:
-        for file_suffix in ["stats"]: # ["stats", "anon.pcap.gz"]:
+        for file_suffix in ["stats"]:  # ["stats", "anon.pcap.gz"]:
             key = f"{file_prefix}/{args.timestamp}.dir{direction}.{file_suffix}"
             filename = f'{HOME}/downloads/{key}'
             download(args.bucket, s3_client, key, filename)
 
     # For downloading from multiple buckets
-    #for bucket in (access_config["buckets"]).split():
+    # for bucket in (access_config["buckets"]).split():
     #    for direction in ["a", "b"]:
     #        for file_suffix in ["stats"]: # ["stats", "anon.pcap.gz"]:
     #            key = f"{file_prefix}/{args.timestamp}.dir{direction}.{file_suffix}"
     #            filename = f'{HOME}/downloads/{key}'
     #            download(access_config["bucket"], s3_client, key, filename)
 
+
 def main():
     # Validates Input
-    ts_pattern = re.compile('\d{8}-\d{6}') # e.g. 20240418-181500
+    ts_pattern = re.compile('\d{8}-\d{6}')  # e.g. 20240418-181500
 
     if not (args.timestamp):
         print("Timestamp is required --> -ts YYYYMMDD-HHMMSS")
         sys.exit()
 
     if not (ts_pattern.match(str(args.timestamp))):
-        print(f"Incorrect timestamp format: {args.timestamp} --> YYYYMMDD-HHMMSS")
+        print(
+            f"Incorrect timestamp format: {args.timestamp} --> YYYYMMDD-HHMMSS")
         sys.exit()
 
     if not (args.bucket):
@@ -120,6 +128,7 @@ def main():
         sys.exit()
 
     download_files()
+
 
 if __name__ == "__main__":
     main()
