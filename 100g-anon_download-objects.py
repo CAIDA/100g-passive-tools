@@ -9,11 +9,16 @@
 #
 #   [Required] {bucket} - 100g-anon-pcap-{year}
 #     e.g. 100g-anon-pcap-2024
+#
+#   [Optional] {stats_only} - By default, only download stats files. Use the `-f / --full` flag to download both stats and pcap files.
+#     -s / --stats-only : Download only stats files (default: True)
+#     -f / --full       : Download stats and anon.pcap.gz files
 # OUTPUTS:
-#   ./downloads/monitor=100g-01/mon={MM}/date={timestamp}.UTC/{file}
+#   ./downloads/monitor=100g-01/year={YYYY}/mon={MM}/date={timestamp}.UTC/{file}
 # EXAMPLES:
 #   python3 100g-anon_download-objects.py -ts {timestamp} -b {bucket}
 #   python3 100g-anon_download-objects.py -ts 20240418-181500 -b 100g-anon-pcap-2024
+#   python3 100g-anon_download-objects.py -ts 20240418-181500 -b 100g-anon-pcap-2024 --full
 # ASSUMPTIONS:
 #   1) [IMPORTANT] Assumes that one has at least 3TB of disk space to store
 #      the two pcap files (one for each direction).
@@ -42,6 +47,11 @@ access_config = config["100g_s3_access"]
 
 parser = argparse.ArgumentParser(
     description='Download files for a given capture')
+parser.add_argument('-s', '--stats-only', dest='stats_only', action='store_true',
+                    help='Download only stats files (default)')
+parser.add_argument('-f', '--full', dest='stats_only', action='store_false',
+                    help='Download full pcap and stats files')
+parser.set_defaults(stats_only=True)
 parser.add_argument('-ts', '--timestamp', dest='timestamp',
                     help='Specify which capture to download')
 parser.add_argument('-b', '--bucket', dest='bucket',
@@ -95,8 +105,9 @@ def download_files() -> None:
     print(f"Creating directory path: {file_path}")
     Path(file_path).mkdir(parents=True, exist_ok=True)
 
+    file_suffixes = ["stats"] if args.stats_only else ["stats", "anon.pcap.gz"]
     for direction in ["a", "b"]:
-        for file_suffix in ["stats"]:  # ["stats", "anon.pcap.gz"]:
+        for file_suffix in file_suffixes:
             key = f"{file_prefix}/{args.timestamp}.dir{direction}.{file_suffix}"
             filename = f'{HOME}/downloads/{key}'
             download(args.bucket, s3_client, key, filename)
