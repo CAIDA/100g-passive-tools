@@ -1,87 +1,115 @@
 # 100g-passive-tools
 
-This repository contains code recipes to demonstrate how to access CAIDA's 100G passive pcap data using various methods.
+Scripts to access CAIDA's 100G passive pcap data. Two access methods are provided; **rclone + native Swift is recommended** for all users who wish to download the large `.anon.pcap.gz` files.
 
-## Requirements
+## Access methods at a glance
 
-- Python <= 3.13 (tested on 3.11, incompatible with 3.13+)
-  - boto3==1.23.10
-  - botocore==1.26.10
-  - configparser==3.5.3
+| Method | When to use | Status |
+|---|---|---|
+| **rclone + native Swift** | Large pcap downloads; built-in retries | **Preferred method of access** |
+| **boto3 / AWS S3** | Small `.stats` files; legacy approach | Retained for existing setups with working S3 credentials |
+
+The S3-compatible path can fail with `SignatureDoesNotMatch` (HTTP 403) on large `.anon.pcap.gz` objects due to an ongoing Swift storage reorganization. The [`boto3` branch](https://github.com/CAIDA/100g-passive-tools/tree/boto3) is a frozen legacy snapshot kept for reference.
+
+Native Swift authentication resolves segmented large objects correctly, and includes retries that should solve the error mentioned above.
 
 ---
 
-Clone the repository into an environment that has a minimum of **2TB of disk space**
+## Prerequisites
+
+Individual `.anon.pcap.gz` files can run >1 TB each. A full one-hour capture (both directions) requires at least 2 TB of disk space to download.
 
 ```bash
 git clone https://github.com/CAIDA/100g-passive-tools.git
 ```
 
-(Recommended) Create a virtual environment
+**rclone (preferred method):** Install from [rclone.org/install](https://rclone.org/install) or via a package manager. The `rclone_*.py` scripts require only standard library Python.
 
-```bash
-python -m venv .venv
-```
+**boto3 method only:** Tested on Python 3.11. Install dependencies with `pip install -r requirements.txt`.
+
+---
+
+## rclone + Swift method (preferred)
+
+The rclone scripts are intended as a direct replacement for the original boto3 scripts. The common flags are the same: use `-ts` for the capture timestamp, `-b` for the container, and `-f` / `--full` when you want the two `.anon.pcap.gz` files in addition to the default `.stats` files.
 
 ### Configuration
 
----
-
-In order to access CAIDA's swift server, a `swift_config.ini` file will have to be configured in the repository directory, using the AWS S3 credentials provided in the confirmation email (`aws_access_key_id` and `aws_secret_access_key`).<br/><br/>
-**Note:** One can use the following config file template to get started: [swift_config-example.ini](https://github.com/CAIDA/100g-passive-tools/blob/main/swift_config-example.ini)
-
-### Considerations
-
----
-
-Each one-directional anonymized pcap file, captured monthly, can reach up to approximately **1TB in size**, so users will need more than **2TB of space** to download the entire one-hour capture.
-
-### Troubleshooting
-
----
-
-Refer to the following [Wiki Page](https://github.com/CAIDA/100g-passive-tools/wiki/Troubleshooting) to troubleshoot commonly found errors.
-
-<br/>
-
-# Access Methods
-
-**Note:** Refer to the [requirements.txt](https://github.com/CAIDA/100g-passive-tools/blob/main/requirements.txt) file to install the dependencies needed for the recipes.
-<br/><br/>
-
-### AWS SDK (boto3)
-
----
-
-**Note:** This method requires a `swift_config.ini` file to be configured, and assumes you've installed [boto3](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html) locally.
-
-Refer to the following recipes to download or list out files for a given capture, [100g-anon_download-objects.py](https://github.com/CAIDA/100g-passive-tools/blob/main/100g-anon_download-objects.py) and [100g-anon_list-objects.py](https://github.com/CAIDA/100g-passive-tools/blob/main/100g-anon_list-objects.py)
-
-<br/>
-
-### AWS CLI
-
----
-
-**Note:** This method requires your `~/.aws/credentials` file to be configured, and assumes you've set up [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html) locally.<br/>
-For installing instructions, reference [AWS Documentation](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html).
+Copy `rclone.conf-example` to `~/.config/rclone/rclone.conf` (or your `$RCLONE_CONFIG` path) and fill in the username and password from your CAIDA-issued credentials:
 
 ```ini
-[default]
-aws_access_key_id =
-aws_secret_access_key =
+[limbo]
+type = swift
+user = YOUR_USERNAME
+key = YOUR_PASSWORD
+auth = https://auth-limbo.caida.org
+tenant = passive
+auth_version = 3
+domain = Default
+endpoint_type = public
 ```
 
-**List out files in the 100g-anon-pcap bucket/container**<br/>
+### Verify access
 
 ```bash
-aws s3api list-objects --bucket 100g-anon-pcap-{year} --endpoint-url https://hermes.caida.org --output text
+rclone ls limbo:100g-anon-pcap-2024
 ```
 
-**Note:** `--output {text|json|table}`
+> **Note:** Data users are scoped to specific containers. Always target `limbo:<container>` directly.
 
-**Download a file in the 100g-anon-pcap-{year} bucket/container**<br/>
+### Scripts
+
+**[rclone_list-objects.py](https://github.com/CAIDA/100g-passive-tools/blob/main/rclone_list-objects.py)**
 
 ```bash
-aws s3api get-object --bucket 100g-anon-pcap-{year} --key monitor=100g-01/mon=05/date=20240523-210000.UTC/20240523-210000.dira.stats --endpoint-url https://hermes.caida.org --output text 20240523-210000.dira.stats
+python3 rclone_list-objects.py -b 100g-anon-pcap-2024                                    # list objects
+python3 rclone_list-objects.py -ts -b 100g-anon-pcap-2024                                # unique timestamps
+python3 rclone_list-objects.py --buckets "100g-anon-pcap-2024 100g-anon-pcap-2025"       # multiple containers
 ```
+
+**[rclone_download-objects.py](https://github.com/CAIDA/100g-passive-tools/blob/main/rclone_download-objects.py)**
+
+```bash
+python3 rclone_download-objects.py -ts 20240418-181500 -b 100g-anon-pcap-2024            # stats only (default)
+python3 rclone_download-objects.py -ts 20240418-181500 -b 100g-anon-pcap-2024 --dry-run  # preview
+python3 rclone_download-objects.py -ts 20240418-181500 -b 100g-anon-pcap-2024 --full     # stats + pcaps
+```
+
+Downloads write to `downloads/monitor=100g-01/year={YYYY}/mon={MM}/date={ts}.UTC/`. In default mode, the script downloads the two expected `.stats` files. With `--full`, it downloads those stats files plus the two expected `.anon.pcap.gz` files.
+
+### Integrity check
+
+```bash
+gzip -t <file>.anon.pcap.gz
+```
+
+rclone cannot verify MD5 on segmented (SLO/DLO) objects — `gzip -t` is the recommended end-to-end integrity check.
+
+---
+
+## boto3 / S3 method (legacy, retained)
+
+Configure `swift_config.ini` using [swift_config-example.ini](https://github.com/CAIDA/100g-passive-tools/blob/main/swift_config-example.ini) as a template. Refer to [100g-anon_download-objects.py](https://github.com/CAIDA/100g-passive-tools/blob/main/100g-anon_download-objects.py) and [100g-anon_list-objects.py](https://github.com/CAIDA/100g-passive-tools/blob/main/100g-anon_list-objects.py) for usage.
+
+This approach is a bit fragile, especially while the containers are undergoing maintenance. As of June 2026, we are reorganizing the data stores on disk, which can cause this approach to fail. The transition toward `rclone` is to reconcile this fragility by authenticating via native Swift.
+
+---
+
+## Troubleshooting
+
+**Access denied from your IP**
+Container access is gated by a per-user IP-range ACL. Connect from the IP address registered with CAIDA. Contact CAIDA if your IP has changed.
+
+**`SignatureDoesNotMatch` on large pcap files**
+Known issue with the S3 path on segmented large objects during storage reorganization. Switch to the rclone + Swift method above.
+
+**`Bad Request` (HTTP 400) on rclone auth**
+Missing `domain = Default` in `rclone.conf`. `rclone`'s swift backend does not infer the domain — it must be set explicitly.
+
+**403 on `rclone lsd limbo:` or account-level listing**
+Expected — data users are scoped to specific containers. Target `limbo:<container>` directly (e.g. `rclone ls limbo:100g-anon-pcap-2024`).
+
+**rclone reports skipped checksums on pcap files**
+Expected. rclone cannot verify MD5 on segmented (SLO/DLO) objects. Use `gzip -t <file>.anon.pcap.gz` for integrity verification instead.
+
+Refer to the [Wiki Troubleshooting page](https://github.com/CAIDA/100g-passive-tools/wiki/Troubleshooting) for additional guidance.

@@ -1,0 +1,15 @@
+# rclone remote configuration for CAIDA 100G passive pcap data (native Swift).
+#
+# Copy this file to ~/.config/rclone/rclone.conf (or wherever your $RCLONE_CONFIG points).
+#
+# Replace YOUR_USERNAME and YOUR_PASSWORD with the credentials from your CAIDA-issued confirmation email.
+
+[limbo]
+type = swift
+user = YOUR_USERNAME
+key = YOUR_PASSWORD
+auth = https://auth-limbo.caida.org
+tenant = passive
+auth_version = 3
+domain = Default
+endpoint_type = public

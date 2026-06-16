@@ -1,3 +1,6 @@
+# boto3/S3 access method only (Python <= 3.13 required)
 boto3==1.23.10
 botocore==1.26.10
 configparser==3.5.3
+
+# rclone scripts (rclone_download-objects.py, rclone_list-objects.py) have no pip dependencies
