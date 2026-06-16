@@ -2,6 +2,13 @@
 
 This repository contains code recipes to demonstrate how to access CAIDA's 100G passive pcap data using various methods.
 
+## NOTE
+
+This branch is deprecated, the approach is still technically viable 
+but it is fragile compared to the recommended `rclone` approach.
+
+Please see the main branch for a more robust approach to downloading the data.
+
 ## Requirements
 
 - Python <= 3.13 (tested on 3.11, incompatible with 3.13+)
